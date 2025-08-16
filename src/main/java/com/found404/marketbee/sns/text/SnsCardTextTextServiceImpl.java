@@ -1,18 +1,18 @@
-package com.found404.marketbee.sns;
+package com.found404.marketbee.sns.text;
 
-import com.found404.marketbee.sns.dto.SnsCardGenerateReq;
-import com.found404.marketbee.sns.dto.SnsCardGenerateResp;
+import com.found404.marketbee.sns.text.dto.SnsCardTextGenerateReq;
+import com.found404.marketbee.sns.text.dto.SnsCardTextGenerateResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SnsCardServiceImpl implements SnsCardService {
+public class SnsCardTextTextServiceImpl implements SnsCardTextService {
 
     private final OpenAiClient openAiClient;
 
     @Override
-    public SnsCardGenerateResp generateCard(SnsCardGenerateReq req) {
+    public SnsCardTextGenerateResp generateCard(SnsCardTextGenerateReq req) {
         String style = switch (req.getType()) {
             case NOTICE -> "공지";
             case PRODUCT_PROMO -> "신제품 홍보";
@@ -41,6 +41,6 @@ public class SnsCardServiceImpl implements SnsCardService {
         };
 
         String generated = openAiClient.chat(prompt, temp);
-        return new SnsCardGenerateResp(generated.trim());
+        return new SnsCardTextGenerateResp(generated.trim());
     }
 }

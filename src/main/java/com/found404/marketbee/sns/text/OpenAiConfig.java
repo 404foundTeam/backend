@@ -1,4 +1,4 @@
-package com.found404.marketbee.sns;
+package com.found404.marketbee.sns.text;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
