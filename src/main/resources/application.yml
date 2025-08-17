@@ -6,10 +6,10 @@ spring:
     import: optional:application-secret.yml
 
   datasource:
-    url: jdbc:mariadb://localhost:3306/marketbee?useUnicode=true&characterEncoding=utf8mb4
+    url: ${DB_URL}
     driver-class-name: org.mariadb.jdbc.Driver
-    username: {root}
-    password: {rlslelfl123!!}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
