@@ -1,5 +1,6 @@
 package com.found404.marketbee.sns.text;
 
+import com.found404.marketbee.sns.text.ai.TextAiService;
 import com.found404.marketbee.sns.text.dto.SnsCardTextGenerateReq;
 import com.found404.marketbee.sns.text.dto.SnsCardTextGenerateResp;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SnsCardTextTextServiceImpl implements SnsCardTextService {
 
-    private final OpenAiClient openAiClient;
+    private final TextAiService textAiService;
 
     @Override
     public SnsCardTextGenerateResp generateCard(SnsCardTextGenerateReq req) {
@@ -40,7 +41,7 @@ public class SnsCardTextTextServiceImpl implements SnsCardTextService {
             case STORE_INTRO   -> 0.6;
         };
 
-        String generated = openAiClient.chat(prompt, temp);
+        String generated = textAiService.generate(prompt, temp);
         return new SnsCardTextGenerateResp(generated.trim());
     }
 }

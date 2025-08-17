@@ -1,4 +1,4 @@
-package com.found404.marketbee.sns.text;
+package com.found404.marketbee.sns.common;
 
 public enum SnsCardType {
     NOTICE,
