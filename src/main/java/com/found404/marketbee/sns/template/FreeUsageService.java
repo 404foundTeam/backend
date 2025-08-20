@@ -1,5 +1,6 @@
 package com.found404.marketbee.sns.template;
 
+import com.found404.marketbee.sns.template.exception.FreeUsageExceededException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -32,7 +33,7 @@ public class FreeUsageService {
         }
 
         if (used != null && used > FREE_LIMIT) {
-            throw new RuntimeException("이번 달 무료 사용 횟수를 모두 소진했습니다.");
+            throw new FreeUsageExceededException();
         }
     }
 
