@@ -75,16 +75,16 @@ public class TemplatePrompt {
             Composition & Text-safe Area (mandatory):
             %s
 
-            Hard constraints:
-            - DO NOT render any letters in any language (including Korean/Hangul), numbers, signage, captions, logos, or watermark.
-            - Do NOT render or hint at the store name "%s".
-            - People-free image: no humans, faces, hands, body parts, silhouettes or crowds; also exclude people in posters,
-              reflections, paintings, statues, mannequins or screens.
-            - The text-safe area MUST include a SOFT WHITE translucent panel (off-white/ivory, not pure #FFFFFF),
-              with subtle background blur behind it (gentle Gaussian DOF). Rounded corners and very light shadow allowed.
-              Target opacity 70–85%%; keep it LOW-DETAIL but NOT empty.
-            - No objects/props/shadows may intrude into the text panel; keep a clean margin around it.
-            - Keep rich detail and the focal subject only in the scene area; maintain color harmony and comfortable contrast.
+                Hard constraints:
+                - DO NOT render any letters in any language (including Korean/Hangul), numbers, signage, captions, logos, or watermark.
+                - Do NOT render or hint at the store name "%s".
+                - People-free image: no humans, faces, hands, body parts, silhouettes or crowds; also exclude people in posters,
+                  reflections, paintings, statues, mannequins or screens.
+                - The text-safe area must remain visually clear and uncluttered.
+                  • Background color/texture is allowed.
+                  • Do NOT place strong objects, food, props, or focal motifs inside this area.
+                  • Ensure nearby objects do not intrude into the clear zone; keep a clean margin.
+                - Keep rich detail and the focal subject only in the designated scene area; maintain color harmony and comfortable contrast.
             """
                 .formatted(
                         copyPrompt,
@@ -102,59 +102,44 @@ public class TemplatePrompt {
     private static String textSafeAreaByTemplate(TemplateType t) {
         return switch (t) {
             case T1_TEXT_ONLY -> """
-                - TEXT-FOCUSED layout, but DO NOT render typography.
-                - Add a SOFT WHITE translucent panel (off-white, slight blur, rounded corners 28–36px).
-                - Panel bounds depend on ratio:
-                
-                  • For 1:1 canvas: centered, covering ~75–80% of canvas height,
-                    with outer margins of 3–4% on all sides.
-                
-                  • For 2:3 canvas: left/right margins ~5%, top 12–15%, bottom 85–88%.
-                
-                  • For 3:2 canvas: left/right margins ~6%, top 18–20%, bottom 82–84%.
-                
-                - The panel should appear dominant in size, leaving less background margin so that text area feels more emphasized.
-                - Decorative thematic motifs may appear in periphery zones but NEVER overlap the text panel.
-                - Motifs should be small-scale, low-contrast, complementary rather than competing.
-                """;
+            - TEXT-FOCUSED layout, but DO NOT render typography.
+            - Reserve a large central zone as relatively clear space (no overlapping food/ingredients/objects).
+            - Ratio-specific guidance:
+            
+              • For 1:1 canvas: central ~75–80% of canvas height must stay relatively uncluttered,
+                with 3–4% margins on all sides.
+              • For 2:3 canvas: keep clear area between top 12–15% and bottom 85–88%.
+              • For 3:2 canvas: keep clear area between top 18–20% and bottom 82–84%.
+            
+            - Decorative motifs may appear only at the periphery and must not intrude into the clear zone.
+            """;
 
             case T2_TEXT_BOTTOM -> """
-                - TOP 55–60%: vivid PRODUCT SCENE (beverage/ingredients/details), high detail only in this zone.
-                - Add a SOFT WHITE translucent text panel (rounded corners, subtle blur).
-                - Panel bounds depend on ratio (strict):
+            - TOP 55–60%: vivid PRODUCT SCENE (beverage/ingredients/details), rich detail only here.
+            - Reserve a horizontal band near the bottom as clear space (no overlapping objects/props).
+            - Ratio-specific guidance:
             
-                  • For 1:1 canvas:
-                    left 2%, right 98%, top 78%, bottom 84%.
+              • For 1:1 canvas: keep area between 78%–84% uncluttered.
+              • For 2:3 canvas: keep area between 72%–78% uncluttered.
+              • For 3:2 canvas: keep area between 77%–83% uncluttered.
             
-                  • For 2:3 canvas:
-                    left 3%, right 97%, top 72%, bottom 78%.
-            
-                  • For 3:2 canvas:
-                    left 2%, right 98%, top 77%, bottom 83%.
-            
-                - The panel must FLOAT inside the canvas at all times.
-                - IMPORTANT: The panel must never touch or overlap any canvas edge.
-                  Leave a clear margin (at least 2–3% on all sides).
-                - Do not adapt panel size or position beyond these bounds.
-                - No food/tableware/strong textures inside the panel.
-                - Clip shadows/blur strictly within the panel bounds.
-                """;
-            case T3_TEXT_RIGHT -> """
-                - LEFT 55–60%: vivid PRODUCT/INTERIOR SCENE with depth; high detail only on the left.
-                - Add a vertical SOFT WHITE translucent panel (off-white, subtle blur) on the right side.
-                - Panel bounds depend on ratio:
-                
-                  • For 1:1 canvas: left 62%, right 95%, top 8%, bottom 92%.
-                  • For 2:3 canvas: left 64%, right 94%, top 6%, bottom 94%.
-                  • For 3:2 canvas: left 60%, right 94%, top 10%, bottom 90%.
-                
-                - The panel must FLOAT inside the canvas; leave clear margins on all sides.
-                - No objects or strong textures inside the panel.
-                - Rounded corners and very light shadow allowed for separation.
-                """;
+            - Clear space must never touch edges directly; leave 2–3% margins.
+            """;
 
+            case T3_TEXT_RIGHT -> """
+            - LEFT 55–60%: vivid PRODUCT/INTERIOR SCENE with depth, high detail only on the left.
+            - Reserve a vertical band on the right side as clear space (no overlapping food/props).
+            - Ratio-specific guidance:
+            
+              • For 1:1 canvas: keep area between 62%–95% horizontally uncluttered.
+              • For 2:3 canvas: keep area between 64%–94% horizontally uncluttered.
+              • For 3:2 canvas: keep area between 60%–94% horizontally uncluttered.
+            
+            - Clear space must float inside the canvas; leave margins on all sides.
+            """;
         };
     }
+
 
     private static String safe(String s) {
         return s == null ? "" : s.replaceAll("[\\r\\n]+", " ").trim();
