@@ -1,6 +1,6 @@
 package com.found404.marketbee.sns.text.dto;
 
-import com.found404.marketbee.sns.common.SnsCardType;
+import com.found404.marketbee.sns.enums.SnsCardType;
 import lombok.Getter;
 import lombok.Setter;
 
