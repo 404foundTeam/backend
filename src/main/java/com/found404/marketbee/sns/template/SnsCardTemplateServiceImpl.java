@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 public class SnsCardTemplateServiceImpl implements SnsCardTemplateService {
 
     private final ImageAiService imageAiService;
+    private final FreeUsageService freeUsageService;
 
     @Override
     public BackgroundResp generateBackground(BackgroundReq req) {
@@ -22,6 +23,8 @@ public class SnsCardTemplateServiceImpl implements SnsCardTemplateService {
                 && (req.menuName() == null || req.menuName().isBlank())) {
             throw new IllegalArgumentException("공지 또는 매장 소개일 때는 menuName이 반드시 필요합니다.");
         }
+
+        freeUsageService.increaseUsage(req.storeUuid());
 
         String prompt = TemplatePrompt.buildForBackground(
                 req.template(),
@@ -43,7 +46,9 @@ public class SnsCardTemplateServiceImpl implements SnsCardTemplateService {
 
         String s3Url = imageAiService.generate(prompt, apiSize);
 
-        return new BackgroundResp(s3Url, req.ratio(), req.template());
+        int remainingFreeCount = freeUsageService.getRemainingCount(req.storeUuid());
+
+        return new BackgroundResp(s3Url, req.ratio(), req.template(), remainingFreeCount);
     }
 }
 
