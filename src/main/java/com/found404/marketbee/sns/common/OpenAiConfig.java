@@ -14,7 +14,7 @@ public class OpenAiConfig {
     RestClient openAiRestClient(@Value("${openai.api.key}") String apiKey) {
         var factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(30_000); // 연결 타임아웃 (30초)
-        factory.setReadTimeout(80_000);    // 응답 읽기 타임아웃 (80초)
+        factory.setReadTimeout(120_000);    // 응답 읽기 타임아웃 (120초)
 
         return RestClient.builder()
                 .baseUrl("https://api.openai.com/v1")
