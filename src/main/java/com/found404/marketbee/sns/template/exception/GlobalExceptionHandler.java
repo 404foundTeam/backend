@@ -14,5 +14,11 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("FREE_USAGE_EXCEEDED", ex.getMessage()));
     }
 
-    public record ErrorResponse(String code, String message) {}
+    @ExceptionHandler(DuplicateFinalCardException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateFinalCard(DuplicateFinalCardException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT) // 409
+                .body(new ErrorResponse("DUPLICATE_FINAL_CARD", ex.getMessage()));
+    }
+
+    public record ErrorResponse(String errorCode, String message) {}
 }
