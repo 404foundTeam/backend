@@ -1,4 +1,4 @@
-package com.found404.marketbee.common;
+package com.found404.marketbee.photo.common;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;

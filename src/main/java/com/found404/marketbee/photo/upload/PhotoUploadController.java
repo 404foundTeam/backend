@@ -1,6 +1,6 @@
 package com.found404.marketbee.photo.upload;
 
-import com.found404.marketbee.common.FileStorageService;
+import com.found404.marketbee.photo.common.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
