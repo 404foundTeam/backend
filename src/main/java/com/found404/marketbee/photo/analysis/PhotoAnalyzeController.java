@@ -13,7 +13,7 @@ public class PhotoAnalyzeController {
 
     @PostMapping("/analyze")
     public ResponseEntity<AnalyzeResponseDto> analyze(@RequestBody AnalyzeRequestDto req) {
-        String result = photoAnalyzeService.analyze(req.getPhotoId(), req.getModel(), req.getGuideText());
+        String result = photoAnalyzeService.analyze(req.getPhotoId(), req.getModel());
         return ResponseEntity.ok(new AnalyzeResponseDto(result));
     }
 }
