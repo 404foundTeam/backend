@@ -1,6 +1,6 @@
-package com.found404.marketbee.place;
+package com.found404.marketbee.store.place;
 
-import com.found404.marketbee.place.dto.PlaceSearchResp;
+import com.found404.marketbee.store.place.dto.PlaceSearchResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

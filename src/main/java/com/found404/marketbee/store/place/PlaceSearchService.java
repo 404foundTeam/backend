@@ -1,6 +1,6 @@
-package com.found404.marketbee.place;
+package com.found404.marketbee.store.place;
 
-import com.found404.marketbee.place.dto.PlaceSearchResp;
+import com.found404.marketbee.store.place.dto.PlaceSearchResp;
 import com.found404.marketbee.store.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
