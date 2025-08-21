@@ -1,4 +1,4 @@
-package com.found404.marketbee.mypage;
+package com.found404.marketbee.mypage.calendar;
 
 import jakarta.persistence.*;
 import lombok.*;

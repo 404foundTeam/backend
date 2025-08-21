@@ -1,9 +1,9 @@
-package com.found404.marketbee.mypage;
+package com.found404.marketbee.mypage.calendar;
 
-import com.found404.marketbee.mypage.dto.CalendarCreateReq;
-import com.found404.marketbee.mypage.dto.CalendarDeleteResp;
-import com.found404.marketbee.mypage.dto.CalendarResp;
-import com.found404.marketbee.mypage.dto.CalendarUpdateReq;
+import com.found404.marketbee.mypage.calendar.dto.CalendarCreateReq;
+import com.found404.marketbee.mypage.calendar.dto.CalendarDeleteResp;
+import com.found404.marketbee.mypage.calendar.dto.CalendarResp;
+import com.found404.marketbee.mypage.calendar.dto.CalendarUpdateReq;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

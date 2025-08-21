@@ -1,4 +1,4 @@
-package com.found404.marketbee.mypage.dto;
+package com.found404.marketbee.mypage.calendar.dto;
 
 import java.time.LocalDate;
 
