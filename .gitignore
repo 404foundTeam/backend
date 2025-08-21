@@ -39,3 +39,12 @@ out/
 src/main/resources/application-secret.yml
 # Local uploads saved by FileStorageService
 uploads/
+
+
+`### Python Virtual Environment ###`
+
+`.venv/`
+
+`venv/`
+
+`__pycache__/`

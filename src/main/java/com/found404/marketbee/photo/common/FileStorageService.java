@@ -1,4 +1,4 @@
-package com.found404.marketbee.common;
+package com.found404.marketbee.photo.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
