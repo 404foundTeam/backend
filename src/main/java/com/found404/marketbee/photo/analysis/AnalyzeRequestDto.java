@@ -6,5 +6,5 @@ import lombok.Data;
 public class AnalyzeRequestDto {
     private Long photoId;
     private String model;
-    private String guideText;
 }
+

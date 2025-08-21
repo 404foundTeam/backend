@@ -13,44 +13,49 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PhotoAnalyzeService {
 
+    private static final String DEFAULT_MODEL = "gpt-4o-mini";
+
     private final PhotoRepository photoRepository;
     private final OpenAiClient openAiClient;
 
-    private static final String DEFAULT_MODEL = "gpt-4o-mini";
+    public String analyze(Long photoId, String model) {
+        if (photoId == null) throw new IllegalArgumentException("photoId is required");
+        String useModel = (model == null || model.isBlank()) ? DEFAULT_MODEL : model;
 
-    public String analyze(Long photoId, String model, String extraGuideText) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new IllegalArgumentException("photo not found: " + photoId));
 
-        String base = photo.getGuideText() == null ? "" : photo.getGuideText();
-        String guide = extraGuideText == null || extraGuideText.isBlank()
-                ? base
-                : (base.isBlank() ? extraGuideText : base + "\n추가 가이드: " + extraGuideText);
-
-        String prompt = """
-                아래 상품 사진 가이드 준수 여부를 간결하게 평가해줘.
-                - 파일 URL: %s
-                - 가이드: %s
-                출력 형식:
-                - 종합평: (한 문장)
-                - 체크리스트: (3~5개 불릿)
-                - 개선팁: (2~3개 불릿)
-                """.formatted(photo.getFileUrl(), guide.isBlank() ? "없음" : guide);
+        String userContent =
+                "Analyze this product photo for listing quality.\n" +
+                        "File URL: " + photo.getFileUrl() + "\n" +
+                        "Check: focus, exposure, blur, reflections, background clutter, cropping, aspect ratio.\n" +
+                        "Return a short bullet list and a final pass/fail.";
 
         List<Map<String, String>> messages = List.of(
-                Map.of("role","system","content","You are a concise photo reviewer for commerce product shots."),
-                Map.of("role","user","content", prompt)
+                Map.of("role", "system", "content", "You are a concise photo QA assistant for e-commerce."),
+                Map.of("role", "user", "content", userContent)
         );
 
-        Map<String,Object> res = openAiClient.chatRaw(
-                messages,
-                (model == null || model.isBlank()) ? DEFAULT_MODEL : model,
-                0.3,
-                600
-        );
+        Map<String, Object> res = openAiClient.chatRaw((List) messages, useModel, 0.2, 800);
+        return extractContent(res);
+    }
 
-        List<Map<String,Object>> choices = (List<Map<String,Object>>) res.get("choices");
-        Map<String,Object> message = (Map<String,Object>) choices.get(0).get("message");
-        return (String) message.get("content");
+    @SuppressWarnings("unchecked")
+    private String extractContent(Map<String, Object> res) {
+        if (res == null) return "No response";
+        Object choicesObj = res.get("choices");
+        if (choicesObj instanceof List<?> choices && !choices.isEmpty()) {
+            Object first = choices.get(0);
+            if (first instanceof Map<?, ?> m) {
+                Object message = m.get("message");
+                if (message instanceof Map<?, ?> msg) {
+                    Object content = msg.get("content");
+                    if (content != null) return content.toString();
+                }
+                Object text = m.get("text");
+                if (text != null) return text.toString();
+            }
+        }
+        return res.toString();
     }
 }
