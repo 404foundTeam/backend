@@ -14,7 +14,7 @@ import java.util.UUID;
 @Service
 public class FileStorageService {
 
-    private static final String ROOT_DIR = "uploads";
+    private static final String ROOT_DIR = System.getProperty("user.dir") + File.separator + "uploads";
 
     @Data
     @AllArgsConstructor
