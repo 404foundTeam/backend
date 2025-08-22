@@ -1,4 +1,4 @@
-package com.found404.marketbee.place.dto;
+package com.found404.marketbee.store.place.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
