@@ -1,6 +1,6 @@
 package com.found404.marketbee.mypage.holidays;
 
-import com.found404.marketbee.mypage.holidays.dto.HolidayResp;
+import com.found404.marketbee.mypage.holidays.dto.HolidayCalendarResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,12 +17,7 @@ public class HolidayController {
     private final HolidayService holidayService;
 
     @GetMapping("/holidays")
-    public List<HolidayResp> holidays(@RequestParam int year, @RequestParam int month) {
-        return holidayService.getHolidays(year, month);
-    }
-
-    @GetMapping("/holidays/year")
-    public List<HolidayResp> holidaysByYear(@RequestParam int year) {
+    public List<HolidayCalendarResp> holidaysByYear(@RequestParam int year) {
         return holidayService.getHolidaysByYear(year);
     }
 }
