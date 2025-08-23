@@ -15,8 +15,8 @@ public class RatingService {
 
 
     @Transactional(readOnly = true)
-    public List<RatingDto> getMonthlyAverageRatings(String placeName) {
-        List<Rating> stats = ratingRepository.findByPlaceNameOrderByRatingMonthAsc(placeName);
+    public List<RatingDto> getMonthlyAverageRatings(String storeUuid) {
+        List<Rating> stats = ratingRepository.findByStoreUuidOrderByRatingMonthAsc(storeUuid);
 
         return stats.stream()
                 .map(stat -> new RatingDto(

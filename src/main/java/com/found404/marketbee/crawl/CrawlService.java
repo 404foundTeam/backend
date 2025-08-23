@@ -47,57 +47,57 @@ public class CrawlService {
         this.reviewAnalysisService = reviewAnalysisService;
     }
 
-    public CrawlResult triggerCrawling(String placeName) {
+    public CrawlResult triggerCrawling(String storeUuid, String placeName) {
         YearMonth targetMonth = YearMonth.from(LocalDate.now().minusMonths(1));
-        Optional<CrawlStatus> status = crawlStatusRepository.findByPlaceName(placeName);
+        Optional<CrawlStatus> status = crawlStatusRepository.findByStoreUuid(storeUuid);
 
         if (status.isPresent() && status.get().getLastCrawled() != null && status.get().getLastCrawled().equals(targetMonth)) {
-            logger.info("[{}] 은(는) 이미 최신 데이터를 가지고 있습니다.", placeName);
+            logger.info("[{}] ID를 가진 가게[{}]는 이미 최신 데이터를 가지고 있습니다.", storeUuid, placeName);
             return CrawlResult.SKIPPED;
         }
 
-        boolean isSuccess = executeCrawlingScript(placeName);
+        boolean isSuccess = executeCrawlingScript(storeUuid, placeName);
         if (isSuccess) {
             try {
-                self.updateCrawlStatus(placeName, targetMonth);
-                self.deleteOldReviews(placeName);
-                self.updateMonthlyAverageRatings(placeName);
-                self.updateGptAnalysis(placeName);
+                self.updateCrawlStatus(storeUuid, placeName, targetMonth);
+                self.deleteOldReviews(storeUuid);
+                self.updateMonthlyAverageRatings(storeUuid, placeName);
+                self.updateGptAnalysis(storeUuid);
                 return CrawlResult.SUCCESS;
             } catch (Exception e) {
-                logger.error("[{}] 크롤링 후처리 작업 중 심각한 오류 발생", placeName, e);
+                logger.error("[{}] ID를 가진 가게[{}]의 후처리 작업 중 오류 발생", storeUuid, placeName, e);
                 return CrawlResult.FAILED;
             }
         } else {
-            logger.error("[{}] 크롤링 프로세스가 실패했습니다.", placeName);
+            logger.error("[{}] ID를 가진 가게[{}]의 크롤링 프로세스가 실패했습니다.", storeUuid, placeName);
             return CrawlResult.FAILED;
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateCrawlStatus(String placeName, YearMonth targetMonth) {
-        CrawlStatus status = crawlStatusRepository.findByPlaceName(placeName)
-                .orElse(new CrawlStatus(placeName, null));
+    public void updateCrawlStatus(String storeUuid, String placeName, YearMonth targetMonth) {
+        CrawlStatus status = crawlStatusRepository.findByStoreUuid(storeUuid)
+                .orElse(new CrawlStatus(storeUuid, placeName, null));
         status.updateLastCrawled(targetMonth);
         crawlStatusRepository.save(status);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void deleteOldReviews(String placeName) {
+    public void deleteOldReviews(String storeUuid) {
         LocalDate cutOffDate = LocalDate.now().withDayOfMonth(1).minusMonths(6);
-        long deletedCount = reviewRepository.deleteByPlaceNameAndReviewDateBefore(placeName, cutOffDate);
-        logger.info(">>>>>> [2단계] 오래된 리뷰 {}건 삭제.", deletedCount);
+        long deletedCount = reviewRepository.deleteByStoreUuidAndReviewDateBefore(storeUuid, cutOffDate);
+        logger.info("오래된 리뷰 {}건 삭제.", deletedCount);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateMonthlyAverageRatings(String placeName) {
-        ratingRepository.deleteByPlaceName(placeName);
+    public void updateMonthlyAverageRatings(String storeUuid, String placeName) {
+        ratingRepository.deleteByStoreUuid(storeUuid);
         em.flush();
         em.clear();
 
-        List<Object[]> rawStats = reviewRepository.findMonthlyAverageRatingsByPlaceName(placeName);
+        List<Object[]> rawStats = reviewRepository.findMonthlyAverageRatingsByStoreUuid(storeUuid);
         if (rawStats.isEmpty()) {
-            logger.warn(">>>>>> [3단계] 리뷰 데이터가 없어 통계를 생성하지 않습니다.");
+            logger.warn("리뷰 데이터가 없어 통계를 생성하지 않습니다.");
             return;
         }
 
@@ -105,24 +105,29 @@ public class CrawlService {
             YearMonth month = YearMonth.parse((String) row[0], DateTimeFormatter.ofPattern("yyyy-MM"));
             Number avgRatingNumber = (Number) row[1];
             BigDecimal avgRatingBigDecimal = BigDecimal.valueOf(avgRatingNumber.doubleValue()).setScale(2, RoundingMode.HALF_UP);
-            return Rating.builder().placeName(placeName).ratingMonth(month).averageRating(avgRatingBigDecimal).build();
+            return Rating.builder()
+                    .storeUuid(storeUuid)
+                    .placeName(placeName)
+                    .ratingMonth(month)
+                    .averageRating(avgRatingBigDecimal)
+                    .build();
         }).collect(Collectors.toList());
         ratingRepository.saveAll(newStats);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void updateGptAnalysis(String placeName) {
-        reviewAnalysisService.updateGptAnalysis(placeName);
+    public void updateGptAnalysis(String storeUuid) {
+        reviewAnalysisService.updateGptAnalysis(storeUuid);
     }
 
-    private boolean executeCrawlingScript(String placeName) {
+    private boolean executeCrawlingScript(String storeUuid, String placeName) {
         logger.info("[START] Crawling process for: {}", placeName);
         try {
             String projectRootPath = System.getProperty("user.dir");
             String scriptPath = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator + "python" + File.separator + "ReviewCrawler.py";
             String pythonExecutable = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator
                     + "python" + File.separator + ".venv" + File.separator + "Scripts" + File.separator + "python.exe";
-            ProcessBuilder processBuilder = new ProcessBuilder(pythonExecutable, scriptPath, placeName);
+            ProcessBuilder processBuilder = new ProcessBuilder(pythonExecutable, scriptPath, storeUuid, placeName);
             processBuilder.environment().put("PYTHONIOENCODING", "UTF-8");
             processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
@@ -142,7 +147,7 @@ public class CrawlService {
                 return false;
             }
         } catch (Exception e) {
-            logger.error("[{}] 크롤링 스크립트 실행 중 예외 발생", placeName, e);
+            logger.error("[{}] 크롤링 스크립트 실행 중 예외 발생", storeUuid, e);
             return false;
         }
     }
