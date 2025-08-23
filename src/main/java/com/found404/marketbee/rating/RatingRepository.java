@@ -7,8 +7,8 @@ import java.util.List;
 
 @Repository
 public interface RatingRepository extends JpaRepository<Rating, Long> {
-    List<Rating> findByPlaceNameOrderByRatingMonthAsc(String placeName);
+    List<Rating> findByStoreUuidOrderByRatingMonthAsc(String storeUuid);
 
     @Transactional
-    void deleteByPlaceName(String placeName);
+    void deleteByStoreUuid(String storeUuid);
 }
