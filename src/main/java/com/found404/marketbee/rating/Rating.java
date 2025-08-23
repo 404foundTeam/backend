@@ -11,7 +11,7 @@ import java.time.YearMonth;
 
 @Entity
 @Table(name = "ratings",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"placeName", "ratingMonth"})
+        uniqueConstraints = @UniqueConstraint(columnNames = {"storeUuid", "ratingMonth"})
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -19,6 +19,9 @@ public class Rating {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private String storeUuid;
 
     @Column(nullable = false)
     private String placeName;
@@ -31,7 +34,8 @@ public class Rating {
     private BigDecimal averageRating;
 
     @Builder
-    public Rating(String placeName, YearMonth ratingMonth, BigDecimal averageRating) {
+    public Rating(String storeUuid, String placeName, YearMonth ratingMonth, BigDecimal averageRating) {
+        this.storeUuid = storeUuid;
         this.placeName = placeName;
         this.ratingMonth = ratingMonth;
         this.averageRating = averageRating;

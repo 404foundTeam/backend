@@ -17,14 +17,17 @@ import java.time.LocalDate;
         uniqueConstraints = {
             @UniqueConstraint(
                     name = "idx_unique_review",
-                    columnNames = {"place_name", "review_hash"}
+                    columnNames = {"store_uuid", "review_hash"}
             )
         },
-        indexes = @Index(name = "idx_reviews_place_name", columnList = "place_name"))
+        indexes = @Index(name = "idx_reviews_store_uuid", columnList = "store_uuid"))
 public class Review {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "store_uuid", nullable = false)
+    private String storeUuid;
 
     @Column(name = "place_name", nullable = false)
     private String placeName;
