@@ -6,17 +6,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/report/reviews")
+@RequestMapping("/api/v1/report")
 @RequiredArgsConstructor
 public class RatingController {
     private final RatingService ratingService;
 
-    @GetMapping("/rating")
-    public ResponseEntity<List<RatingDto>> getMonthlyAverageRatings(@RequestParam String placeName) {
-        if (placeName == null || placeName.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        List<RatingDto> monthlyAverages = ratingService.getMonthlyAverageRatings(placeName);
+    @GetMapping("/{storeUuid}/rating")
+    public ResponseEntity<List<RatingDto>> getMonthlyAverageRatings(@PathVariable String storeUuid) {
+        List<RatingDto> monthlyAverages = ratingService.getMonthlyAverageRatings(storeUuid);
+
         return ResponseEntity.ok(monthlyAverages);
     }
 }

@@ -7,18 +7,20 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/report/reviews")
+@RequestMapping("/api/v1/")
 @RequiredArgsConstructor
 public class CrawlController {
     private final CrawlService crawlService;
 
-    @PostMapping("/crawl")
-    public ResponseEntity<Map<String, String>> startCrawling(@RequestBody Map<String, String> payload) {
-        String placeName = payload.get("placeName");
-        if (placeName == null || placeName.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "가게 이름(placeName)은 필수입니다."));
+    @PostMapping("/report")
+    public ResponseEntity<Map<String, String>> startCrawling(@RequestBody CrawlDto crawlDto) {
+        String storeUuid = crawlDto.getStoreUuid();
+        String placeName = crawlDto.getPlaceName();
+
+        if (storeUuid == null || storeUuid.trim().isEmpty() || placeName == null || placeName.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "storeUuid와 placeName은 필수입니다."));
         }
-        CrawlResult result = crawlService.triggerCrawling(placeName);
+        CrawlResult result = crawlService.triggerCrawling(storeUuid, placeName);
 
         switch (result) {
             case SUCCESS:
