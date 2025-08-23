@@ -33,11 +33,11 @@ def get_db_connection():
         print(f"데이터베이스 연결 오류: {e}")
         return None
 
-def insert_review(conn, place_name, review_date, rating, content):
+def insert_review(conn, store_uuid, place_name, review_date, rating, content):
     review_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
     with conn.cursor() as cursor:
-        sql = "INSERT IGNORE INTO reviews (place_name, review_date, rating, content, review_hash) VALUES (%s, %s, %s, %s, %s)"
-        cursor.execute(sql, (place_name, review_date, rating, content, review_hash))
+        sql = "INSERT IGNORE INTO reviews (store_uuid, place_name, review_date, rating, content, review_hash) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(sql, (store_uuid, place_name, review_date, rating, content, review_hash))
     conn.commit()
 
 def get_kakao_review_link(place_name):
@@ -73,7 +73,7 @@ def get_kakao_review_link(place_name):
     finally:
         driver.quit()
 
-def crawl_kakao_reviews(place_url):
+def crawl_kakao_reviews(place_url, store_uuid, place_name):
     today = datetime.today()
     start_date = (today.replace(day=1) - relativedelta(months=6)).strftime("%Y-%m-%d")
     end_date = (today.replace(day=1) - relativedelta(days=1)).strftime("%Y-%m-%d")
@@ -127,7 +127,6 @@ def crawl_kakao_reviews(place_url):
 
         html = driver.page_source
         soup = BeautifulSoup(html, "html.parser")
-        place_name = soup.select_one("h2.tit_head").text
         review_list = soup.select(".list_review > li")
         if not review_list:
             print("리뷰 데이터를 찾지 못했습니다. 페이지 구조를 다시 확인해주세요.")
@@ -150,7 +149,7 @@ def crawl_kakao_reviews(place_url):
                     content = comment_area.text.strip()
 
                 print(f"수집된 리뷰: {review_date}, 평점: {rating}, 내용: {content[:30]}...")
-                insert_review(db_conn, place_name, review_date, rating, content)
+                insert_review(db_conn, store_uuid, place_name, review_date, rating, content)
 
     except TimeoutException:
         print("페이지 로딩 시간 초과. URL이나 네트워크, CSS 선택자(.list_review)를 확인해주세요.")
@@ -164,14 +163,15 @@ def crawl_kakao_reviews(place_url):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        place_name = sys.argv[1]
+    if len(sys.argv) > 2:
+        store_uuid = sys.argv[1]
+        place_name = sys.argv[2]
         print(f"전달받은 가게 이름: {place_name}")
 
         target_url = get_kakao_review_link(place_name)
         if target_url:
             print("리뷰 탭 링크:", target_url)
-            crawl_kakao_reviews(target_url)
+            crawl_kakao_reviews(target_url, store_uuid, place_name)
         else:
             print(f"'{place_name}'의 리뷰 링크를 찾지 못했습니다.")
     else:
