@@ -1,7 +1,6 @@
 package com.found404.marketbee.store.place;
 
 import com.found404.marketbee.store.place.dto.PlaceSearchResp;
-import com.found404.marketbee.store.StoreRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,10 +15,9 @@ import java.util.stream.Collectors;
 public class PlaceSearchService {
 
     private final KakaoClient kakaoClient;
-    private final StoreRepository repo;
 
     public PlaceSearchResp searchByCoord(double x, double y, int radius) {
-        int sizePerCat = 5;
+        int sizePerCat = 15;
         int page = 1;
 
         List<Map<String, Object>> docs = kakaoClient.searchByCoord(
@@ -36,7 +34,7 @@ public class PlaceSearchService {
                         (d1, d2) -> d1,
                         LinkedHashMap::new
                 ))
-                .values().stream().limit(5).toList();
+                .values().stream().limit(15).toList();
 
         List<PlaceSearchResp.Item> items = unique.stream().map(d ->
                 new PlaceSearchResp.Item(
