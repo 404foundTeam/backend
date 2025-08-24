@@ -17,8 +17,17 @@ public class ReportSuggestionController {
     private final ReportSuggestionService reportSuggestionService;
 
     @GetMapping("/{storeUuid}/improvement-tip")
-    public ResponseEntity<ImprovementTipResponse> getImprovementTips(@PathVariable String storeUuid) {
-        return ResponseEntity.ok(reportSuggestionService.getCombinedImprovementTips(storeUuid));
+    public ResponseEntity<?> getImprovementTips(@PathVariable String storeUuid) {
+        try {
+            ImprovementTipResponse response = reportSuggestionService.getCombinedImprovementTips(storeUuid);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> errorResponse = Map.of(
+                    "error", "Not Found",
+                    "message", e.getMessage()
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
     }
 
     @GetMapping("/{storeUuid}/marketing")

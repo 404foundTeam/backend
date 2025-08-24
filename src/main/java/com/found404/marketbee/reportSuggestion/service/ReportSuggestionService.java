@@ -53,13 +53,13 @@ public class ReportSuggestionService {
 
         List<String> combinedList = new ArrayList<>(salesTips);
         combinedList.addAll(reviewTips);
+
         if (combinedList.isEmpty()) {
-            String emptyMessage = "분석할 데이터가 부족하여 개선팁을 생성할 수 없습니다.";
-            return new ImprovementTipResponse(emptyMessage);
-        } else {
-            String combinedString = String.join("\n", combinedList);
-            return new ImprovementTipResponse(combinedString);
+            throw new IllegalArgumentException("분석할 엑셀 및 리뷰 데이터가 모두 부족하여 개선팁을 생성할 수 없습니다.");
         }
+
+        String combinedString = String.join("\n", combinedList);
+        return new ImprovementTipResponse(combinedString);
     }
 
     @Transactional(readOnly = true)
