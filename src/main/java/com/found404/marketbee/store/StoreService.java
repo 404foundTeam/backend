@@ -20,6 +20,7 @@ public class StoreService {
             return new StoreCreateResp(
                     existStore.getStoreUuid(),
                     existStore.getPlaceName(),
+                    existStore.getRoadAddress(),
             false
             );
         }
@@ -33,6 +34,6 @@ public class StoreService {
         s.setLatitude(req.latitude());
 
         repo.save(s);
-        return new StoreCreateResp(s.getStoreUuid(),s.getPlaceName() , true);
+        return new StoreCreateResp(s.getStoreUuid(),s.getPlaceName(),s.getRoadAddress(),true);
     }
 }
