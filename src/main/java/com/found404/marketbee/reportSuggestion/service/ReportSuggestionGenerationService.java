@@ -30,7 +30,7 @@ public class ReportSuggestionGenerationService {
     private final OpenAiClient openAiClient;
     private final ObjectMapper objectMapper;
 
-    @Value("${openai.api.model}")
+    @Value("${openai.chat.model}")
     private String gptModelName;
 
     @Transactional
