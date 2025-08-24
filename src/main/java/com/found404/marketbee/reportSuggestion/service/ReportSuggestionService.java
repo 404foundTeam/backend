@@ -33,25 +33,33 @@ public class ReportSuggestionService {
 
     @Transactional(readOnly = true)
     public ImprovementTipResponse getCombinedImprovementTips(String storeUuid) {
-        MonthlyStat stat = salesService.findLatestMonthlyStat(storeUuid);
-        List<String> salesTips = readJsonToList(stat.getImprovementTipsJson());
-        Optional<ReviewAnalysis> reviewAnalysisOptional = reviewAnalysisRepository.findByStoreUuid(storeUuid);
+        List<String> salesTips = new ArrayList<>();
+        List<String> reviewTips = new ArrayList<>();
 
-        List<String> reviewTips;
+        try {
+            MonthlyStat stat = salesService.findLatestMonthlyStat(storeUuid);
+            salesTips.addAll(readJsonToList(stat.getImprovementTipsJson()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Sales data not found for storeUuid: {}, skipping sales tips. Message: {}", storeUuid, e.getMessage());
+        }
+
+        Optional<ReviewAnalysis> reviewAnalysisOptional = reviewAnalysisRepository.findByStoreUuid(storeUuid);
         if (reviewAnalysisOptional.isPresent()) {
             ReviewImprovementTipDto reviewTipsDto = ReviewImprovementTipDto.from(reviewAnalysisOptional.get());
-            reviewTips = reviewTipsDto.getReviewImprovementTipDto();
-        } else {
-            reviewTips = List.of("리뷰 데이터가 부족하여 개선팁을 생성할 수 없습니다.");
+            reviewTips.addAll(reviewTipsDto.getReviewImprovementTipDto().stream()
+                    .filter(tip -> tip != null && !tip.isBlank())
+                    .toList());
         }
 
         List<String> combinedList = new ArrayList<>(salesTips);
-        combinedList.addAll(reviewTips.stream()
-                .filter(tip -> tip != null && !tip.isBlank())
-                .toList());
-
-        String combinedString = String.join("\n", combinedList);
-        return new ImprovementTipResponse(combinedString);
+        combinedList.addAll(reviewTips);
+        if (combinedList.isEmpty()) {
+            String emptyMessage = "분석할 데이터가 부족하여 개선팁을 생성할 수 없습니다.";
+            return new ImprovementTipResponse(emptyMessage);
+        } else {
+            String combinedString = String.join("\n", combinedList);
+            return new ImprovementTipResponse(combinedString);
+        }
     }
 
     @Transactional(readOnly = true)

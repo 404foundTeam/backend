@@ -20,6 +20,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -422,13 +423,14 @@ public class SalesService {
     }
 
     //DB 상 마지막 날짜 찾아 통계 반환하는 헬퍼 메소드
-    @Transactional(readOnly = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public MonthlyStat findLatestMonthlyStat(String storeUuid) {
         LocalDate latestDate = summaryRepository.findLatestSalesDateByStoreUuid(storeUuid)
-                .orElseThrow(() -> new IllegalStateException(storeUuid + "에 대한 데이터가 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException(storeUuid + "에 대한 매출 데이터가 존재하지 않습니다."));
+
         String yearMonth = latestDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
         return monthlyStatRepository.findByStoreUuidAndYearMonth(storeUuid, yearMonth)
-                .orElseThrow(() -> new IllegalStateException(storeUuid + "의 " + yearMonth + "월 통계 데이터가 존재하지 않습니다. (데이터 불일치 오류)"));
+                .orElseThrow(() -> new IllegalArgumentException(storeUuid + "의 " + yearMonth + "월 통계 데이터가 존재하지 않습니다."));
     }
 }
