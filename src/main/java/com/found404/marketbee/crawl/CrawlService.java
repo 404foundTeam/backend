@@ -123,19 +123,30 @@ public class CrawlService {
     private boolean executeCrawlingScript(String storeUuid, String placeName) {
         logger.info("[START] Crawling process for: {}", placeName);
         try {
-            String projectRootPath = System.getProperty("user.dir");
-            String scriptPath = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator + "python" + File.separator + "ReviewCrawler.py";
-            String pythonExecutable = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator
-                    + "python" + File.separator + ".venv" + File.separator + "Scripts" + File.separator + "python.exe";
-            ProcessBuilder processBuilder = new ProcessBuilder(pythonExecutable, scriptPath, storeUuid, placeName);
+            // 은진이 로컬 환경 경로 (기존)
+//            String projectRootPath = System.getProperty("user.dir");
+//            String scriptPath = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator + "python" + File.separator + "ReviewCrawler.py";
+//            String pythonExecutable = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator
+//                    + "python" + File.separator + ".venv" + File.separator + "Scripts" + File.separator + "python.exe";
+
+            // EC2 환경에 맞춘 절대 경로 (배포)
+            String pythonExecutable = "/apps/marketbee/venv/bin/python";
+            String scriptPath = "/apps/marketbee/crawler/ReviewCrawler.py";
+
+            ProcessBuilder processBuilder = new ProcessBuilder(
+                    pythonExecutable, scriptPath, storeUuid, placeName
+            );
+
+            // 파이썬 한글 깨짐오류 방지
             processBuilder.environment().put("PYTHONIOENCODING", "UTF-8");
             processBuilder.redirectErrorStream(true);
+
             Process process = processBuilder.start();
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    logger.debug("[Python] {}", line);
+                    logger.info("[Python] {}", line);
                 }
             }
             boolean finished = process.waitFor(20, TimeUnit.MINUTES);

@@ -24,7 +24,7 @@ public class ReviewAnalysisService {
     private final ReviewAnalysisRepository analysisRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${openai.api.model}")
+    @Value("${openai.chat.model}")
     private String gptModelName;
 
     @Transactional(readOnly = true)
