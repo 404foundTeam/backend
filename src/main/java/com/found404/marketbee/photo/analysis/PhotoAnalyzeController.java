@@ -5,15 +5,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/photo")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/photo")
 public class PhotoAnalyzeController {
 
-    private final PhotoAnalyzeService photoAnalyzeService;
+    private final PhotoAnalyzeService analyzeService;
 
     @PostMapping("/analyze")
-    public ResponseEntity<AnalyzeResponseDto> analyze(@RequestBody AnalyzeRequestDto req) {
-        String result = photoAnalyzeService.analyze(req.getPhotoId(), req.getModel());
-        return ResponseEntity.ok(new AnalyzeResponseDto(result));
+    public ResponseEntity<AnalyzeResponseDto> analyze(@RequestBody AnalyzeRequestDto req) throws Exception {
+        return ResponseEntity.ok(analyzeService.analyze(req));
     }
 }
