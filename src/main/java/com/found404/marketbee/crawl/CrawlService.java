@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -123,13 +122,6 @@ public class CrawlService {
     private boolean executeCrawlingScript(String storeUuid, String placeName) {
         logger.info("[START] Crawling process for: {}", placeName);
         try {
-            // 은진이 로컬 환경 경로 (기존)
-//            String projectRootPath = System.getProperty("user.dir");
-//            String scriptPath = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator + "python" + File.separator + "ReviewCrawler.py";
-//            String pythonExecutable = projectRootPath + File.separator + "src" + File.separator + "main" + File.separator
-//                    + "python" + File.separator + ".venv" + File.separator + "Scripts" + File.separator + "python.exe";
-
-            // EC2 환경에 맞춘 절대 경로 (배포)
             String pythonExecutable = "/apps/marketbee/venv/bin/python";
             String scriptPath = "/apps/marketbee/crawler/ReviewCrawler.py";
 

@@ -4,5 +4,5 @@ import lombok.*;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class GuideTextResp {
-    private String guideText;   // 프론트는 이 한 필드만 사용
+    private String guideText;
 }
