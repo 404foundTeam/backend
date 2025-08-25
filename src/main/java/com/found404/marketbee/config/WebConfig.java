@@ -11,7 +11,8 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins(
                         "http://localhost:5173",
-                        "http://13.209.239.240"
+                        "http://13.209.239.240",
+                        "http://marketbee.site"
                 )
                 .allowedMethods("*");
     }
