@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. GitHub repo 소스코드 가져오기
+      # 1. 소스코드 가져오기
       - name: Checkout source
         uses: actions/checkout@v3
 
@@ -21,19 +21,29 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # 3. Gradle 빌드 (JAR 생성)
+      # 3. Gradle 빌드 (테스트 제외)
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
-      # 4. EC2에 배포
-      - name: Deploy to EC2
+      # 4. EC2에 JAR 업로드
+      - name: Upload JAR to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "build/libs/*.jar"
+          target: "/apps/marketbee/app.jar"
+
+      # 5. EC2에서 실행
+      - name: Run app on EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # 기존 앱 종료
+            # 기존 프로세스 종료
             if [ -f /apps/marketbee/app.pid ]; then
               PID=$(cat /apps/marketbee/app.pid)
               if ps -p $PID > /dev/null; then
@@ -41,10 +51,6 @@ jobs:
                 kill -9 $PID
               fi
             fi
-
-            # 최신 JAR 업로드 (GitHub → EC2)
-            rm -f /apps/marketbee/app.jar
-            scp -i ~/.ssh/id_rsa ./build/libs/*.jar ubuntu@${{ secrets.EC2_HOST }}:/apps/marketbee/app.jar
 
             # 새 프로세스 실행
             nohup java -Xms128m -Xmx256m -XX:+UseSerialGC \
