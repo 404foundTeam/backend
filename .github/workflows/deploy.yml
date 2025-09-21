@@ -51,7 +51,10 @@ jobs:
                 kill -9 $PID
               fi
             fi
-
+          
+            # 최신 JAR을 app.jar로 덮어쓰기
+            mv /apps/marketbee/*SNAPSHOT.jar /apps/marketbee/app.jar
+          
             # 새 프로세스 실행
             nohup java -Xms128m -Xmx256m -XX:+UseSerialGC \
               -jar /apps/marketbee/app.jar \
