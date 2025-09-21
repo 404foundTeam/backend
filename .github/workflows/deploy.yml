@@ -43,21 +43,26 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            cd /apps/marketbee
+
             # 기존 프로세스 종료
-            if [ -f /apps/marketbee/app.pid ]; then
-              PID=$(cat /apps/marketbee/app.pid)
+            if [ -f app.pid ]; then
+              PID=$(cat app.pid)
               if ps -p $PID > /dev/null; then
                 echo "Killing process $PID"
                 kill -9 $PID
               fi
+              rm -f app.pid
             fi
-          
-            # 최신 JAR을 app.jar로 덮어쓰기
-            mv /apps/marketbee/*SNAPSHOT.jar /apps/marketbee/app.jar
-          
+
+            # 최신 JAR을 app.jar로 교체
+            JAR_FILE=$(ls -t *SNAPSHOT.jar | head -n 1)
+            mv "$JAR_FILE" app.jar
+
             # 새 프로세스 실행
             nohup java -Xms128m -Xmx256m -XX:+UseSerialGC \
-              -jar /apps/marketbee/app.jar \
+              -jar app.jar \
               --spring.profiles.active=prod \
-              --spring.config.additional-location=optional:file:/apps/marketbee/ \
-              > /var/log/marketbee/app.out 2>&1 & echo $! > /apps/marketbee/app.pid
+              > /var/log/marketbee/app.out 2>&1 & echo $! > app.pid
+
+            echo "✅ Backend deployed and restarted successfully."
