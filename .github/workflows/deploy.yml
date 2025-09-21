@@ -32,8 +32,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "build/libs/*.jar"
-          target: "/apps/marketbee/app.jar"
+          source: "build/libs/*SNAPSHOT.jar"
+          target: "/apps/marketbee/"
 
       # 5. EC2에서 실행
       - name: Run app on EC2
