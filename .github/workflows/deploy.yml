@@ -42,7 +42,6 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DB_URL,DB_USERNAME,DB_PASSWORD
           script: |
             cd /apps/marketbee
 
@@ -59,6 +58,19 @@ jobs:
             # 최신 JAR을 app.jar로 교체
             JAR_FILE=$(ls -t *SNAPSHOT.jar | head -n 1)
             mv "$JAR_FILE" app.jar
+
+            # etc 디렉토리 없으면 생성
+            mkdir -p /apps/marketbee/etc
+
+            # marketbee.env 생성 (Secrets 값 전달)
+            echo "DB_URL=${{ secrets.DB_URL }}" > /apps/marketbee/etc/marketbee.env
+            echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> /apps/marketbee/etc/marketbee.env
+            echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> /apps/marketbee/etc/marketbee.env
+
+            # 환경변수 로드
+            set -a
+            source /apps/marketbee/etc/marketbee.env
+            set +a
 
             # 새 프로세스 실행
             nohup java -Xms128m -Xmx256m -XX:+UseSerialGC \
