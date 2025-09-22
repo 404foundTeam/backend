@@ -46,7 +46,6 @@ public class SalesService {
     private final ReportSuggestionGenerationService suggestionGenerationService;
     private final ObjectMapper objectMapper;
 
-    //엑셀 파싱 및 원본 데이터 저장
     @Transactional
     public LocalDate parseAndSaveExcel(MultipartFile file, String storeUuid) {
         LocalDate salesDate = extractDateFromFileName(file.getOriginalFilename())
@@ -64,7 +63,10 @@ public class SalesService {
             parseSalesTransactionSheet(workbook.getSheetAt(1), storeUuid, salesDate);
             parseProductSalesSheet(workbook.getSheetAt(2), storeUuid, salesDate);
             updateMonthlyStats(storeUuid, salesDate);
-            suggestionGenerationService.generateAndSaveSuggestions(storeUuid, salesDate);
+
+            LocalDate latestDataDateOverall = summaryRepository.findLatestSalesDateByStoreUuid(storeUuid)
+                    .orElseThrow(() -> new IllegalStateException("데이터 저장 후 날짜를 찾을 수 없습니다: " + storeUuid));
+            suggestionGenerationService.generateAndSaveSuggestions(storeUuid, latestDataDateOverall);
 
             return salesDate;
 
@@ -74,7 +76,6 @@ public class SalesService {
         }
     }
 
-    //파싱 헬퍼 메소드
     private Optional<LocalDate> extractDateFromFileName(String fileName) {
         if (fileName == null || fileName.isEmpty()) {
             return Optional.empty();
@@ -127,7 +128,6 @@ public class SalesService {
         return null;
     }
 
-    //시트별 파싱
     private void parseDailySummarySheet(Sheet sheet, String storeUuid, LocalDate salesDate) {
         Row headerRow = findHeaderRow(sheet, "실매출액", "영수건수");
         if (headerRow == null) throw new IllegalArgumentException("첫 번째 시트에서 '실매출액', '영수건수' 헤더를 찾을 수 없습니다.");
@@ -211,7 +211,7 @@ public class SalesService {
             String productName = ExcelParseUtil.getCellStringValue(row.getCell(productNameCol));
             Long netSales = ExcelParseUtil.getCellLongValue(row.getCell(netSalesCol));
 
-            if (!productName.isEmpty() && netSales != 0) {
+            if (!productName.isEmpty()) {
                 productSalesList.add(ProductSales.builder()
                         .storeUuid(storeUuid)
                         .salesDate(salesDate)
@@ -223,7 +223,6 @@ public class SalesService {
         productRepository.saveAll(productSalesList);
     }
 
-    //데이터 저장 및 관리 헬퍼 메소드
     private void saveDailySalesSummary(String storeUuid, LocalDate salesDate, Long netSales, Integer receiptCount) {
         summaryRepository.save(DailySalesSummary.builder()
                 .storeUuid(storeUuid)
@@ -242,7 +241,12 @@ public class SalesService {
         summaryRepository.deleteOldData(storeUuid, cutoffDate);
         productRepository.deleteOldData(storeUuid, cutoffDate);
         transactionRepository.deleteOldData(storeUuid, cutoffDate.atStartOfDay());
-        monthlyStatRepository.deleteOldData(storeUuid, cutoffYearMonth);
+
+        List<MonthlyStat> statsToDelete = monthlyStatRepository.findByStoreUuidAndYearMonthLessThan(storeUuid, cutoffYearMonth);
+
+        if (statsToDelete != null && !statsToDelete.isEmpty()) {
+            monthlyStatRepository.deleteAll(statsToDelete);
+        }
     }
 
     private void deleteExistingDataForDate(String storeUuid, LocalDate date) {
@@ -253,7 +257,6 @@ public class SalesService {
         transactionRepository.deleteByStoreUuidAndTransactionDateTimeBetween(storeUuid, startOfDay, endOfDay);
     }
 
-    //월간 통계 계산 및 저장
     @Transactional
     public void updateMonthlyStats(String storeUuid, LocalDate uploadedFileDate) {
         LocalDate startOfMonth = uploadedFileDate.with(TemporalAdjusters.firstDayOfMonth());
@@ -284,6 +287,15 @@ public class SalesService {
             log.error("Failed to serialize monthly stats to JSON for place: {}", storeUuid, e);
             throw new RuntimeException("월간 통계 데이터 JSON 변환 실패", e);
         }
+
+        LocalDate startOfNextMonth = uploadedFileDate.plusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
+        LocalDate endOfNextMonth = startOfNextMonth.with(TemporalAdjusters.lastDayOfMonth());
+
+        summaryRepository.findLatestSalesDateInMonth(storeUuid, startOfNextMonth, endOfNextMonth)
+                .ifPresent(latestDateInNextMonth -> {
+                    log.info("Data for the following month ({}) exists. Triggering stats update for it.", latestDateInNextMonth.getMonth());
+                    updateMonthlyStats(storeUuid, latestDateInNextMonth);
+                });
     }
 
     private MonthlySalesResponse calculateMonthlySales(String storeUuid, LocalDate today) {
@@ -387,7 +399,6 @@ public class SalesService {
         return new VisitorStatsResponse(mostVisited, leastVisited, dailyRank);
     }
 
-    //API 조회
     @Transactional(readOnly = true)
     public ProductRankingResponse getMonthlyProductSalesRanking(String storeUuid) {
         MonthlyStat stat = findLatestMonthlyStat(storeUuid);
@@ -422,7 +433,6 @@ public class SalesService {
         }
     }
 
-    //DB 상 마지막 날짜 찾아 통계 반환하는 헬퍼 메소드
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public MonthlyStat findLatestMonthlyStat(String storeUuid) {
         LocalDate latestDate = summaryRepository.findLatestSalesDateByStoreUuid(storeUuid)

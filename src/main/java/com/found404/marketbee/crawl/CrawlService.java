@@ -129,7 +129,6 @@ public class CrawlService {
                     pythonExecutable, scriptPath, storeUuid, placeName
             );
 
-            // 파이썬 한글 깨짐오류 방지
             processBuilder.environment().put("PYTHONIOENCODING", "UTF-8");
             processBuilder.redirectErrorStream(true);
 
