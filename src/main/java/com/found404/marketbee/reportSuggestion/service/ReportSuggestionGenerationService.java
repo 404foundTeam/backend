@@ -49,13 +49,11 @@ public class ReportSuggestionGenerationService {
 
             Map<String, Object> parsedSuggestions = parseCombinedGptResponse(gptResponse);
 
-            //매출 개선팁 저장
             List<String> improvementTips = getListFromParsedSuggestions(parsedSuggestions, "improvementTips", String.class);
             String tipsJson = objectMapper.writeValueAsString(improvementTips);
             monthlyStat.updateImprovementTips(tipsJson);
             monthlyStatRepository.save(monthlyStat);
 
-            //마케팅 제안 저장
             List<Map<String, String>> marketingSuggestionsData = getListOfMapsFromParsedSuggestions(parsedSuggestions, "marketingSuggestions");
 
             marketingSuggestionRepository.deleteByMonthlyStat(monthlyStat);
@@ -75,7 +73,6 @@ public class ReportSuggestionGenerationService {
         }
     }
 
-    //타입 변환을 위한 헬퍼 메소드
     private <T> List<T> getListFromParsedSuggestions(Map<String, Object> parsedSuggestions, String key, Class<T> elementType) {
         Object value = parsedSuggestions.get(key);
         if (value instanceof List) {
@@ -140,10 +137,11 @@ public class ReportSuggestionGenerationService {
         promptBuilder.append("1. 위 데이터를 바탕으로 현실적인 조언을 해주세요.\n");
         promptBuilder.append("2. 답변은 반드시 JSON 형식이어야 하며, 두 개의 키를 가져야 합니다: 'improvementTips'와 'marketingSuggestions'.\n");
         promptBuilder.append("3. 'improvementTips'의 값은, 위 데이터를 종합하여 매장 운영에 대한 핵심 개선팁 2개를 담은 JSON 문자열 배열**이어야 합니다. 각 팁은 반드시 **적당한 길이의 한 문장으로** 생성해주세요.\n");
-        promptBuilder.append("4. 'marketingSuggestions' 키의 값은 **JSON 객체들의 배열**이어야 하며, 정확히 8개의 창의적이고 실현 가능한 마케팅 제안을 포함해야 합니다.\n");
-        promptBuilder.append("5. 8개의 마케팅 제안은 **강점 활용 전략 최소 2개**와 **약점 보완 전략 최소 2개**를 반드시 골고루 포함해야 합니다.\n");
-        promptBuilder.append("5. 각 마케팅 제안 객체는 'title'(짧은 제목)과 'description'(구체적인 설명) 두 개의 키를 가져야 합니다.\n");
-        promptBuilder.append("6. 예시: {\"improvementTips\": [\"팁1 요약.\", \"팁2 요약.\"], \"marketingSuggestions\": [{\"title\": \"제목1\", \"description\": \"설명1\"}, ..., {\"title\": \"제목8\", \"description\": \"설명8\"}]}");
+        promptBuilder.append("4. 2개의 개선팁은 형식적인 답이 아닌 위 데이터의 내용(메뉴명, 시간대, 요일)을 100% 활용하여, 답변에 직간접적으로 사용해야 합니다.\n");
+        promptBuilder.append("5. 'marketingSuggestions' 키의 값은 **JSON 객체들의 배열**이어야 하며, 정확히 8개의 창의적이고 실현 가능한 마케팅 제안을 포함해야 합니다.\n");
+        promptBuilder.append("6. 8개의 마케팅 제안은 **강점 활용 전략 최소 2개**와 **약점 보완 전략 최소 2개**를 반드시 골고루 포함해야 합니다.\n");
+        promptBuilder.append("7. 각 마케팅 제안 객체는 'title'(짧은 제목)과 'description'(구체적인 설명) 두 개의 키를 가져야 합니다.\n");
+        promptBuilder.append("8. 예시: {\"improvementTips\": [\"팁1 요약.\", \"팁2 요약.\"], \"marketingSuggestions\": [{\"title\": \"제목1\", \"description\": \"설명1\"}, ..., {\"title\": \"제목8\", \"description\": \"설명8\"}]}");
 
         return promptBuilder.toString();
     }
@@ -162,14 +160,13 @@ public class ReportSuggestionGenerationService {
 
         String cleanedJson = content.trim();
 
-        //Markdown 코드 블록 기호 제거
         if (cleanedJson.startsWith("```json")) {
             cleanedJson = cleanedJson.substring(7);
             if (cleanedJson.endsWith("```")) {
                 cleanedJson = cleanedJson.substring(0, cleanedJson.length() - 3);
             }
         }
-        //일반 코드 블록 기호 제거
+
         if (cleanedJson.startsWith("```")) {
             cleanedJson = cleanedJson.substring(3);
             if (cleanedJson.endsWith("```")) {

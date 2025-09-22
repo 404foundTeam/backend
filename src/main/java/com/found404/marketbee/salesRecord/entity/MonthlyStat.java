@@ -1,10 +1,14 @@
 package com.found404.marketbee.salesRecord.entity;
 
+import com.found404.marketbee.reportSuggestion.MarketingSuggestion;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -34,6 +38,9 @@ public class MonthlyStat {
 
     @Column(columnDefinition = "TEXT")
     private String improvementTipsJson;
+
+    @OneToMany(mappedBy = "monthlyStat", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MarketingSuggestion> marketingSuggestions = new ArrayList<>();
 
     @Builder
     public MonthlyStat(String storeUuid, String yearMonth) {

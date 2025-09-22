@@ -28,7 +28,6 @@ public class CrawlController {
             case SKIPPED:
                 return ResponseEntity.ok(Map.of("status", "SKIPPED", "message", result.getMessage()));
             case FAILED:
-                // 크롤링 중 오류가 발생한 경우 (서버 오류)
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                         .body(Map.of("status", "FAILED", "message", result.getMessage()));
             default:
