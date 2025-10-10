@@ -41,10 +41,7 @@ src/main/resources/application-secret.yml
 uploads/
 
 
-`### Python Virtual Environment ###`
-
-`.venv/`
-
-`venv/`
-
-`__pycache__/`
+### Python Virtual Environment ###
+.venv/
+venv/
+__pycache__/
