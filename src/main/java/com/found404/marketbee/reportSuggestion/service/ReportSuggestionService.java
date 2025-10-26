@@ -8,8 +8,7 @@ import com.found404.marketbee.reportSuggestion.MarketingSuggestionRepository;
 import com.found404.marketbee.reportSuggestion.dto.ImprovementTipResponse;
 import com.found404.marketbee.reportSuggestion.dto.MarketingSuggestionResponse;
 import com.found404.marketbee.reviewAnalysis.ReviewAnalysis;
-import com.found404.marketbee.reviewAnalysis.ReviewAnalysisRepository;
-import com.found404.marketbee.reportSuggestion.dto.ReviewImprovementTipDto;
+import com.found404.marketbee.reviewAnalysis.ReviewAnalysisService;
 import com.found404.marketbee.salesRecord.SalesService;
 import com.found404.marketbee.salesRecord.entity.MonthlyStat;
 import com.found404.marketbee.reportSuggestion.dto.MarketingSuggestionResponse.SuggestionDto;
@@ -18,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,37 +29,86 @@ import java.util.Optional;
 public class ReportSuggestionService {
     private final SalesService salesService;
     private final MarketingSuggestionRepository marketingSuggestionRepository;
-    private final ReviewAnalysisRepository reviewAnalysisRepository;
+    private final ReviewAnalysisService reviewAnalysisService;
     private final ObjectMapper objectMapper;
 
-    @Transactional(readOnly = true)
     public ImprovementTipResponse getCombinedImprovementTips(String storeUuid) {
-        List<String> salesTips = new ArrayList<>();
-        List<String> reviewTips = new ArrayList<>();
-
+        YearMonth salesLatestMonth = null;
         try {
-            MonthlyStat stat = salesService.findLatestMonthlyStat(storeUuid);
-            salesTips.addAll(readJsonToList(stat.getImprovementTipsJson()));
+            salesLatestMonth = salesService.findLatestMonthlyStat(storeUuid).getYearMonthAsType();
         } catch (IllegalArgumentException e) {
-            log.warn("Sales data not found for storeUuid: {}, skipping sales tips. Message: {}", storeUuid, e.getMessage());
+            log.warn("최신 월 탐색: Sales 데이터 없음.");
         }
 
-        Optional<ReviewAnalysis> reviewAnalysisOptional = reviewAnalysisRepository.findByStoreUuid(storeUuid);
-        if (reviewAnalysisOptional.isPresent()) {
-            ReviewImprovementTipDto reviewTipsDto = ReviewImprovementTipDto.from(reviewAnalysisOptional.get());
-            reviewTips.addAll(reviewTipsDto.getReviewImprovementTipDto().stream()
-                    .filter(tip -> tip != null && !tip.isBlank())
-                    .toList());
+        YearMonth reviewLatestMonth = null;
+        ReviewAnalysis latestReview = reviewAnalysisService.getAnalysis(storeUuid);
+        if (latestReview != null) {
+            reviewLatestMonth = latestReview.getAnalysisMonth();
         }
 
-        List<String> combinedList = new ArrayList<>(salesTips);
-        combinedList.addAll(reviewTips);
+        YearMonth finalLatestMonth = salesLatestMonth;
+        if (finalLatestMonth == null || (reviewLatestMonth != null && reviewLatestMonth.isAfter(finalLatestMonth))) {
+            finalLatestMonth = reviewLatestMonth;
+        }
 
-        if (combinedList.isEmpty()) {
+        if (finalLatestMonth == null) {
             throw new IllegalArgumentException("분석할 엑셀 및 리뷰 데이터가 모두 부족하여 개선팁을 생성할 수 없습니다.");
         }
 
-        String combinedString = String.join("\n", combinedList);
+        return getCombinedImprovementTipsByDate(storeUuid, finalLatestMonth.getYear(), finalLatestMonth.getMonthValue());
+    }
+
+    public ImprovementTipResponse getCombinedImprovementTipsByDate(String storeUuid, int year, int month) {
+        YearMonth targetMonth = YearMonth.of(year, month);
+
+        Optional<MonthlyStat> statOptional = findMonthlyStatSafely(storeUuid, targetMonth);
+        Optional<ReviewAnalysis> analysisOptional = findReviewAnalysisSafely(storeUuid, targetMonth);
+
+        List<String> salesTips = new ArrayList<>();
+        if (statOptional.isPresent()) {
+            salesTips.addAll(readJsonToList(statOptional.get().getImprovementTipsJson()));
+        }
+
+        List<String> reviewTips = new ArrayList<>();
+        if (analysisOptional.isPresent()) {
+            reviewTips.add(analysisOptional.get().getImprovementTip1());
+            reviewTips.add(analysisOptional.get().getImprovementTip2());
+        }
+
+        return buildResponse(salesTips, reviewTips);
+    }
+
+    private Optional<MonthlyStat> findMonthlyStatSafely(String storeUuid, YearMonth targetMonth) {
+        try {
+            return Optional.of(salesService.findMonthlyStatByYearAndMonth(storeUuid, targetMonth.getYear(), targetMonth.getMonthValue()));
+        } catch (IllegalArgumentException e) {
+            log.warn("Sales data for {}/{} not found, skipping sales tips. Message: {}", storeUuid, targetMonth, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private Optional<ReviewAnalysis> findReviewAnalysisSafely(String storeUuid, YearMonth targetMonth) {
+        try {
+            return Optional.ofNullable(reviewAnalysisService.getAnalysisByDate(storeUuid, targetMonth.getYear(), targetMonth.getMonthValue()));
+        } catch (Exception e) {
+            log.warn("Review analysis for {}/{} not found, skipping review tips. Message: {}", storeUuid, targetMonth, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private ImprovementTipResponse buildResponse(List<String> salesTips, List<String> reviewTips) {
+        List<String> combinedList = new ArrayList<>(salesTips);
+        combinedList.addAll(reviewTips);
+
+        List<String> finalList = combinedList.stream()
+                .filter(tip -> tip != null && !tip.isBlank())
+                .collect(Collectors.toList());
+
+        if (finalList.isEmpty()) {
+            throw new IllegalArgumentException("분석할 엑셀 및 리뷰 데이터가 모두 부족하여 개선팁을 생성할 수 없습니다.");
+        }
+
+        String combinedString = String.join("\n", finalList);
         return new ImprovementTipResponse(combinedString);
     }
 

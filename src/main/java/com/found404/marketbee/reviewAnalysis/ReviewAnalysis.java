@@ -6,21 +6,24 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.time.YearMonth;
 
 @Entity
 @Getter
 @Table(name = "review_analysis",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"storeUuid"}))
+        uniqueConstraints = @UniqueConstraint(name = "uk_review_analysis_store_month",
+                columnNames = {"store_uuid", "analysis_month"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ReviewAnalysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "store_uuid", nullable = false, unique = true)
+    @Column(name = "store_uuid", nullable = false)
     private String storeUuid;
+
+    @Column(nullable = false)
+    private YearMonth analysisMonth;
 
     private String keyword1;
     private String keyword2;
@@ -32,25 +35,23 @@ public class ReviewAnalysis {
     @Column(columnDefinition = "TEXT")
     private String improvementTip2;
 
-    private LocalDate lastUpdated;
-
     @Builder
-    public ReviewAnalysis(String storeUuid, String keyword1, String keyword2, String keyword3, String improvementTip1, String improvementTip2, LocalDate lastUpdated) {
+    public ReviewAnalysis(String storeUuid, YearMonth analysisMonth, String keyword1, String keyword2, String keyword3, String improvementTip1, String improvementTip2) {
         this.storeUuid = storeUuid;
+        this.analysisMonth = analysisMonth;
         this.keyword1 = keyword1;
         this.keyword2 = keyword2;
         this.keyword3 = keyword3;
         this.improvementTip1 = improvementTip1;
         this.improvementTip2 = improvementTip2;
-        this.lastUpdated = lastUpdated;
     }
 
-    public void update(String keyword1, String keyword2, String keyword3, String improvementTip1, String improvementTip2, LocalDate lastUpdated) {
+    public void update(YearMonth analysisMonth, String keyword1, String keyword2, String keyword3, String improvementTip1, String improvementTip2) {
+        this.analysisMonth = analysisMonth;
         this.keyword1 = keyword1;
         this.keyword2 = keyword2;
         this.keyword3 = keyword3;
         this.improvementTip1 = improvementTip1;
         this.improvementTip2 = improvementTip2;
-        this.lastUpdated = lastUpdated;
     }
 }
