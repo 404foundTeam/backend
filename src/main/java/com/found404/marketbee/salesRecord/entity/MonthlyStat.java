@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -59,5 +60,9 @@ public class MonthlyStat {
 
     public void updateImprovementTips(String improvementTipsJson) {
         this.improvementTipsJson = improvementTipsJson;
+    }
+
+    public YearMonth getYearMonthAsType() {
+        return YearMonth.parse(this.yearMonth);
     }
 }
