@@ -40,4 +40,7 @@ public class Rating {
         this.ratingMonth = ratingMonth;
         this.averageRating = averageRating;
     }
+    public void updateAverageRating(BigDecimal newAverageRating) {
+        this.averageRating = newAverageRating;
+    }
 }

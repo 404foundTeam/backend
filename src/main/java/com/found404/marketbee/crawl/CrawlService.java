@@ -4,7 +4,6 @@ import com.found404.marketbee.rating.Rating;
 import com.found404.marketbee.rating.RatingRepository;
 import com.found404.marketbee.review.ReviewRepository;
 import com.found404.marketbee.reviewAnalysis.ReviewAnalysisService;
-import jakarta.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,17 +34,15 @@ public class CrawlService {
     private final ReviewRepository reviewRepository;
     private final RatingRepository ratingRepository;
     private final CrawlService self;
-    private final EntityManager em;
     private final ReviewAnalysisService reviewAnalysisService;
 
     @Autowired
     public CrawlService(CrawlStatusRepository crawlStatusRepository, ReviewRepository reviewRepository,
-                        RatingRepository ratingRepository, @Lazy CrawlService self, EntityManager em, ReviewAnalysisService reviewAnalysisService) {
+                        RatingRepository ratingRepository, @Lazy CrawlService self, ReviewAnalysisService reviewAnalysisService) {
         this.crawlStatusRepository = crawlStatusRepository;
         this.reviewRepository = reviewRepository;
         this.ratingRepository = ratingRepository;
         this.self = self;
-        this.em = em;
         this.reviewAnalysisService = reviewAnalysisService;
     }
 
@@ -58,10 +58,10 @@ public class CrawlService {
         boolean isSuccess = executeCrawlingScript(storeUuid, placeName);
         if (isSuccess) {
             try {
-                self.updateCrawlStatus(storeUuid, placeName, targetMonth);
                 self.deleteOldReviews(storeUuid);
                 self.updateMonthlyAverageRatings(storeUuid, placeName);
                 self.updateGptAnalysis(storeUuid);
+                self.updateCrawlStatus(storeUuid, placeName, targetMonth);
                 return CrawlResult.SUCCESS;
             } catch (Exception e) {
                 logger.error("[{}] ID를 가진 가게[{}]의 후처리 작업 중 오류 발생", storeUuid, placeName, e);
@@ -90,28 +90,52 @@ public class CrawlService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateMonthlyAverageRatings(String storeUuid, String placeName) {
-        ratingRepository.deleteByStoreUuid(storeUuid);
-        em.flush();
-        em.clear();
-
         List<Object[]> rawStats = reviewRepository.findMonthlyAverageRatingsByStoreUuid(storeUuid);
         if (rawStats.isEmpty()) {
             logger.warn("리뷰 데이터가 없어 통계를 생성하지 않습니다.");
             return;
         }
 
-        List<Rating> newStats = rawStats.stream().map(row -> {
-            YearMonth month = YearMonth.parse((String) row[0], DateTimeFormatter.ofPattern("yyyy-MM"));
-            Number avgRatingNumber = (Number) row[1];
-            BigDecimal avgRatingBigDecimal = BigDecimal.valueOf(avgRatingNumber.doubleValue()).setScale(2, RoundingMode.HALF_UP);
-            return Rating.builder()
-                    .storeUuid(storeUuid)
-                    .placeName(placeName)
-                    .ratingMonth(month)
-                    .averageRating(avgRatingBigDecimal)
-                    .build();
-        }).collect(Collectors.toList());
-        ratingRepository.saveAll(newStats);
+        final YearMonth endMonthExclusive = YearMonth.now();
+        final YearMonth startMonthInclusive = endMonthExclusive.minusMonths(6);
+
+        Map<YearMonth, Rating> existingRatingsMap = ratingRepository
+                .findByStoreUuidAndRatingMonthBetweenOrderByRatingMonthAsc(storeUuid, startMonthInclusive, endMonthExclusive.minusMonths(1))
+                .stream()
+                .collect(Collectors.toMap(Rating::getRatingMonth, Function.identity()));
+
+        List<Rating> ratingsToSave = rawStats.stream()
+                .filter(row -> {
+                    try {
+                        YearMonth month = YearMonth.parse((String) row[0], DateTimeFormatter.ofPattern("yyyy-MM"));
+                        return !month.isBefore(startMonthInclusive) && month.isBefore(endMonthExclusive);
+                    } catch (DateTimeParseException e) {
+                        return false;
+                    }
+                })
+                .map(row -> {
+                    YearMonth month = YearMonth.parse((String) row[0], DateTimeFormatter.ofPattern("yyyy-MM"));
+                    Number avgRatingNumber = (Number) row[1];
+                    BigDecimal avgRatingBigDecimal = BigDecimal.valueOf(avgRatingNumber.doubleValue()).setScale(2, RoundingMode.HALF_UP);
+
+                    Rating rating = existingRatingsMap.get(month);
+
+                    if (rating != null) {
+                        rating.updateAverageRating(avgRatingBigDecimal);
+                        return rating;
+                    } else {
+                        return Rating.builder()
+                                .storeUuid(storeUuid)
+                                .placeName(placeName)
+                                .ratingMonth(month)
+                                .averageRating(avgRatingBigDecimal)
+                                .build();
+                    }
+                }).collect(Collectors.toList());
+
+        if (!ratingsToSave.isEmpty()) {
+            ratingRepository.saveAll(ratingsToSave);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
