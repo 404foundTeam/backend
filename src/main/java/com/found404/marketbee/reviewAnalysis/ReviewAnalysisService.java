@@ -10,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,7 +29,15 @@ public class ReviewAnalysisService {
 
     @Transactional(readOnly = true)
     public ReviewAnalysis getAnalysis(String storeUuid) {
-        return analysisRepository.findByStoreUuid(storeUuid).orElse(null);
+        return analysisRepository.findTopByStoreUuidOrderByAnalysisMonthDesc(storeUuid)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewAnalysis getAnalysisByDate(String storeUuid, int year, int month) {
+        YearMonth targetMonth = YearMonth.of(year, month);
+        return analysisRepository.findByStoreUuidAndAnalysisMonth(storeUuid, targetMonth)
+                .orElse(null);
     }
 
     @Transactional
@@ -39,6 +47,8 @@ public class ReviewAnalysisService {
             log.warn("[{}] ID를 가진 가게 리뷰 데이터가 없어 GPT 분석을 건너뜁니다.", storeUuid);
             return;
         }
+
+        YearMonth targetMonth = YearMonth.now();
 
         String concatenatedReviews = reviews.stream()
                 .map(Review::getContent)
@@ -60,18 +70,18 @@ public class ReviewAnalysisService {
             List<String> keywords = (List<String>) parsedContent.get("keywords");
             List<String> improvementTips = (List<String>) parsedContent.get("improvementTips");
 
-            ReviewAnalysis analysis = analysisRepository.findByStoreUuid(storeUuid)
+            ReviewAnalysis analysis = analysisRepository.findByStoreUuidAndAnalysisMonth(storeUuid, targetMonth)
                     .orElseGet(() -> ReviewAnalysis.builder().storeUuid(storeUuid).build());
+
             analysis.update(
+                    targetMonth,
                     keywords.get(0),
                     keywords.get(1),
                     keywords.get(2),
                     improvementTips.get(0),
-                    improvementTips.get(1),
-                    LocalDate.now()
+                    improvementTips.get(1)
             );
             analysisRepository.save(analysis);
-            log.info("[{}] GPT 리뷰 분석 완료 및 저장 성공.", storeUuid);
 
         } catch (Exception e) {
             log.error("[{}] GPT 리뷰 분석 중 오류 발생", storeUuid, e);

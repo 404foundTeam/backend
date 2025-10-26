@@ -53,7 +53,6 @@ public class SalesService {
 
         log.info("Starting Excel parsing for place: {}, date from filename: {}", storeUuid, salesDate);
 
-        deleteOldData(storeUuid, salesDate);
         deleteExistingDataForDate(storeUuid, salesDate);
 
         try (InputStream is = file.getInputStream();
@@ -232,20 +231,47 @@ public class SalesService {
                 .build());
     }
 
-    private void deleteOldData(String storeUuid, LocalDate currentDate) {
-        LocalDate cutoffDate = currentDate.minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
-        String cutoffYearMonth = cutoffDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+    @Transactional(readOnly = true)
+    public MonthlyStat findMonthlyStatByYearAndMonth(String storeUuid, int year, int month) {
+        String yearMonth = String.format("%d-%02d", year, month);
 
-        log.info("Deleting data older than date: {} and yearMonth: {}", cutoffDate, cutoffYearMonth);
+        return monthlyStatRepository.findByStoreUuidAndYearMonth(storeUuid, yearMonth)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        storeUuid + "의 " + yearMonth + "에 대한 월간 통계 데이터가 존재하지 않습니다."
+                ));
+    }
 
-        summaryRepository.deleteOldData(storeUuid, cutoffDate);
-        productRepository.deleteOldData(storeUuid, cutoffDate);
-        transactionRepository.deleteOldData(storeUuid, cutoffDate.atStartOfDay());
+    @Transactional(readOnly = true)
+    public ProductRankingResponse getMonthlyProductSalesRanking(String storeUuid, int year, int month) {
+        MonthlyStat stat = findMonthlyStatByYearAndMonth(storeUuid, year, month);
+        try {
+            return objectMapper.readValue(stat.getProductRankingJson(), ProductRankingResponse.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize ProductRanking for place: {}", storeUuid, e);
+            throw new RuntimeException("상품 랭킹 데이터 변환 실패", e);
+        }
+    }
 
-        List<MonthlyStat> statsToDelete = monthlyStatRepository.findByStoreUuidAndYearMonthLessThan(storeUuid, cutoffYearMonth);
+    @Transactional(readOnly = true)
+    public MonthlySalesResponse getMonthlySales(String storeUuid, int year, int month) {
+        MonthlyStat stat = findMonthlyStatByYearAndMonth(storeUuid, year, month);
+        return new MonthlySalesResponse(stat.getCurrentMonthSales(), stat.getPreviousMonthSales(), stat.getGrowthPercentage());
+    }
 
-        if (statsToDelete != null && !statsToDelete.isEmpty()) {
-            monthlyStatRepository.deleteAll(statsToDelete);
+    @Transactional(readOnly = true)
+    public MonthlyReceiptCountResponse getMonthlyReceiptCount(String storeUuid, int year, int month) {
+        MonthlyStat stat = findMonthlyStatByYearAndMonth(storeUuid, year, month);
+        return new MonthlyReceiptCountResponse(stat.getTotalReceipts());
+    }
+
+    @Transactional(readOnly = true)
+    public VisitorStatsResponse getMonthlyVisitorStats(String storeUuid, int year, int month) {
+        MonthlyStat stat = findMonthlyStatByYearAndMonth(storeUuid, year, month);
+        try {
+            return objectMapper.readValue(stat.getVisitorStatsJson(), VisitorStatsResponse.class);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to deserialize VisitorStats for place: {}", storeUuid, e);
+            throw new RuntimeException("방문객 통계 데이터 변환 실패", e);
         }
     }
 
