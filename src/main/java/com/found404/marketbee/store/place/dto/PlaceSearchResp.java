@@ -8,7 +8,7 @@ public record PlaceSearchResp(
 ) {
     public record Item(
             String placeId,
-            String placeName,
+            String storeName,
             String roadAddress,
             BigDecimal longitude,
             BigDecimal latitude
