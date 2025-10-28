@@ -19,7 +19,7 @@ public class StoreService {
             Store existStore = existing.get();
             return new StoreCreateResp(
                     existStore.getStoreUuid(),
-                    existStore.getPlaceName(),
+                    existStore.getStoreName(),
                     existStore.getRoadAddress(),
             false
             );
@@ -28,12 +28,12 @@ public class StoreService {
         Store s = new Store();
         s.setStoreUuid(UUID.randomUUID().toString());
         s.setPlaceId(req.placeId());
-        s.setPlaceName(req.placeName());
+        s.setStoreName(req.placeName());
         s.setRoadAddress(req.roadAddress());
         s.setLongitude(req.longitude());
         s.setLatitude(req.latitude());
 
         repo.save(s);
-        return new StoreCreateResp(s.getStoreUuid(),s.getPlaceName(),s.getRoadAddress(),true);
+        return new StoreCreateResp(s.getStoreUuid(),s.getStoreName(),s.getRoadAddress(),true);
     }
 }

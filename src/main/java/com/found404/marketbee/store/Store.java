@@ -1,5 +1,6 @@
 package com.found404.marketbee.store;
 
+import com.found404.marketbee.user.User;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,8 +21,8 @@ public class Store {
     @Column(name = "place_id", nullable = false, length = 100)
     private String placeId;
 
-    @Column(name = "place_name", length = 100)
-    private String placeName;
+    @Column(name = "store_name", nullable = false, length = 100)
+    private String storeName;
 
     @Column(name = "road_address", length = 255)
     private String roadAddress;
@@ -31,4 +32,15 @@ public class Store {
 
     @Column(precision = 10, scale = 6)
     private BigDecimal latitude;  // y
+
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
+
+    @PrePersist
+    public void prePersist() {
+        if (storeUuid == null) {
+            storeUuid = java.util.UUID.randomUUID().toString();
+        }
+    }
 }
