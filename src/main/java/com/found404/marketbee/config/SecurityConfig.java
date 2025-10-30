@@ -29,6 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/users/exists").permitAll()
                         .requestMatchers("/api/v1/stores/verify").permitAll()
+                        .requestMatchers("/api/v1/stores/ocr").permitAll()
                         .requestMatchers("/api/v1/stores/search-by-coord").permitAll()
                         .anyRequest().authenticated()
                 )
