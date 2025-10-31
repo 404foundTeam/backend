@@ -42,7 +42,8 @@ public class PlaceSearchService {
                         (String) d.get("place_name"),
                         (String) d.get("road_address_name"),
                         toBD((String) d.get("x")),
-                        toBD((String) d.get("y"))
+                        toBD((String) d.get("y")),
+                        (String) d.get("category_group_code")
                 )
         ).toList();
 

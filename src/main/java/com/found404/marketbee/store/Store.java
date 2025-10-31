@@ -21,8 +21,8 @@ public class Store {
     @Column(name = "place_id", nullable = false, length = 100)
     private String placeId;
 
-    @Column(name = "store_name", nullable = false, length = 100)
-    private String storeName;
+    @Column(name = "place_name", nullable = false, length = 100)
+    private String placeName;
 
     @Column(name = "road_address", length = 255)
     private String roadAddress;
@@ -32,6 +32,9 @@ public class Store {
 
     @Column(precision = 10, scale = 6)
     private BigDecimal latitude;  // y
+
+    @Column(name = "category", length = 10)
+    private String category;
 
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id")
