@@ -63,7 +63,7 @@ public class UserService {
 
         Store store = new Store();
         store.setPlaceId(request.getPlaceId());
-        store.setStoreName(request.getStoreName());
+        store.setPlaceName(request.getPlaceName());
         store.setRoadAddress(request.getRoadAddress());
         store.setLongitude(BigDecimal.valueOf(request.getLongitude()));
         store.setLatitude(BigDecimal.valueOf(request.getLatitude()));
@@ -90,7 +90,8 @@ public class UserService {
                 .success(true)
                 .message("로그인에 성공했습니다.")
                 .accessToken(token)
-                .storeName(store.getStoreName())
+                .placeName(store.getPlaceName())
+                .storeUuid(store.getStoreUuid())
                 .roadAddress(store.getRoadAddress())
                 .build();
     }

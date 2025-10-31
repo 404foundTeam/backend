@@ -9,6 +9,7 @@ public class LoginResponse {
     private boolean success;
     private String message;
     private String accessToken;
-    private String storeName;
+    private String placeName;
+    private String storeUuid;
     private String roadAddress;
 }

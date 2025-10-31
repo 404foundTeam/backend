@@ -9,7 +9,7 @@ public class SignUpRequest {
     private String userId;
     private String password;
     private String placeId;
-    private String storeName;
+    private String placeName;
     private String roadAddress;
     private Double longitude;
     private Double latitude;
