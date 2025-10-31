@@ -8,9 +8,10 @@ public record PlaceSearchResp(
 ) {
     public record Item(
             String placeId,
-            String storeName,
+            String placeName,
             String roadAddress,
             BigDecimal longitude,
-            BigDecimal latitude
+            BigDecimal latitude,
+            String category
     ) {}
 }
