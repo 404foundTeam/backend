@@ -32,6 +32,7 @@ public class StoreService {
         s.setRoadAddress(req.roadAddress());
         s.setLongitude(req.longitude());
         s.setLatitude(req.latitude());
+        s.setCategory(req.category());
 
         repo.save(s);
         return new StoreCreateResp(s.getStoreUuid(),s.getPlaceName(),s.getRoadAddress(),true);

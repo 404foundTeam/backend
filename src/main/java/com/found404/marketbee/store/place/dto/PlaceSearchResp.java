@@ -11,6 +11,7 @@ public record PlaceSearchResp(
             String placeName,
             String roadAddress,
             BigDecimal longitude,
-            BigDecimal latitude
+            BigDecimal latitude,
+            String category
     ) {}
 }
