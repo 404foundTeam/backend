@@ -13,5 +13,6 @@ public class SignUpRequest {
     private String roadAddress;
     private Double longitude;
     private Double latitude;
+    private String category;
     private boolean verified;
 }

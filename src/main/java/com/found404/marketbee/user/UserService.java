@@ -67,6 +67,7 @@ public class UserService {
         store.setRoadAddress(request.getRoadAddress());
         store.setLongitude(BigDecimal.valueOf(request.getLongitude()));
         store.setLatitude(BigDecimal.valueOf(request.getLatitude()));
+        store.setCategory(request.getCategory());
         store.setUser(user);
 
         user.setStore(store);
