@@ -1,4 +1,4 @@
-package com.found404.marketbee.place.dto;
+package com.found404.marketbee.store.place.dto;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -11,6 +11,7 @@ public record PlaceSearchResp(
             String placeName,
             String roadAddress,
             BigDecimal longitude,
-            BigDecimal latitude
+            BigDecimal latitude,
+            String category
     ) {}
 }

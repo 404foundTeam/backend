@@ -1,4 +1,4 @@
-package com.found404.marketbee.place;
+package com.found404.marketbee.store.place;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

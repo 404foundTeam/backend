@@ -14,10 +14,15 @@ public class StoreService {
     private final StoreRepository repo;
 
     public StoreCreateResp create(StoreCreateReq req) {
-        // 이미 등록된 placeId면 재사용
         Optional<Store> existing = repo.findByPlaceId(req.placeId());
         if (existing.isPresent()) {
-            return new StoreCreateResp(existing.get().getStoreUuid(), false);
+            Store existStore = existing.get();
+            return new StoreCreateResp(
+                    existStore.getStoreUuid(),
+                    existStore.getPlaceName(),
+                    existStore.getRoadAddress(),
+            false
+            );
         }
 
         Store s = new Store();
@@ -27,8 +32,9 @@ public class StoreService {
         s.setRoadAddress(req.roadAddress());
         s.setLongitude(req.longitude());
         s.setLatitude(req.latitude());
+        s.setCategory(req.category());
 
         repo.save(s);
-        return new StoreCreateResp(s.getStoreUuid(), true);
+        return new StoreCreateResp(s.getStoreUuid(),s.getPlaceName(),s.getRoadAddress(),true);
     }
 }
