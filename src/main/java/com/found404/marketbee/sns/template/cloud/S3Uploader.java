@@ -8,6 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -74,5 +75,20 @@ public class S3Uploader {
                         .putObjectRequest(objectRequest));
 
         return presignedRequest.url(); // java.net.URL 반환
+    }
+
+    public void deleteFile(String fileUrl) {
+        try {
+            String key = fileUrl.substring(fileUrl.indexOf("final-cards/"));
+
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            s3Client.deleteObject(deleteRequest);
+        } catch (Exception e) {
+            throw new RuntimeException("S3 파일 삭제 중 오류가 발생했습니다.", e);
+        }
     }
 }
