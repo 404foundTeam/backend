@@ -1,5 +1,6 @@
 package com.found404.marketbee.sns.template;
 
+import com.found404.marketbee.sns.template.cloud.S3Uploader;
 import com.found404.marketbee.sns.template.dto.FinalCardMyPageReq;
 import com.found404.marketbee.sns.template.dto.FinalCardMyPageResp;
 import com.found404.marketbee.sns.template.exception.DuplicateFinalCardException;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FinalCardService {
     private final FinalCardRepository finalCardRepository;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public void save(String storeUuid, String finalUrl) {
@@ -44,5 +46,15 @@ public class FinalCardService {
                 .toList();
         return new FinalCardMyPageResp(items, p.getNumber(), p.getSize(), p.getTotalElements());
     }
+
+    @Transactional
+    public void delete(Long id) {
+        FinalCard card = finalCardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 카드가 존재하지 않습니다."));
+
+        s3Uploader.deleteFile(card.getUrl());
+        finalCardRepository.delete(card);
+    }
+
 
 }
