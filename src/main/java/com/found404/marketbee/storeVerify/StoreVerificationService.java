@@ -32,8 +32,8 @@ public class StoreVerificationService {
                         isNotBlank(ocrData.openDate());
 
         String message = allRecognized
-                ? "OCR 인식 결과입니다. 올바른지 확인 후 수정 가능합니다."
-                : "OCR 인식에 실패했습니다. 일부 정보가 누락되었습니다.";
+                ? "OCR 인식 결과입니다."
+                : "OCR 인식에 실패했습니다. 다시 업로드해주세요.";
 
         return new OcrResponse(
                 isNotBlank(ocrData.storeNumber()) ? ocrData.storeNumber() : null,
